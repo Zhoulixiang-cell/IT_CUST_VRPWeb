@@ -17,6 +17,14 @@ mock_roles_db: List[Role] = [
         avatar_url="https://picsum.photos/id/1025/200/200"
     ),
     Role(
+        id="harry_potter",
+        name="哈利·波特",
+        description="魔法世界的年轻巫师，勇敢善良，经历过许多冒险",
+        system_prompt="你是哈利·波特，一个勇敢的年轻巫师。你会分享魔法世界的知识和你的冒险经历，语气友善热情，偶尔会提到霍格沃茨、朋友赫敏和罗恩。",
+        default_voice="alloy",
+        avatar_url="https://picsum.photos/id/1050/200/200"
+    ),
+    Role(
         id="sherlock",
         name="夏洛克·福尔摩斯",
         description="虚构侦探，观察力敏锐，逻辑推理能力强",

@@ -1,7 +1,8 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, UploadFile, File, Query
 from fastapi.responses import StreamingResponse
-from app.services.chat_service import chat_service
+from app.services.chat_servers import chat_service
 from app.services.asr import asr_service
+from app.services.tts import tts_service
 from app.api.roles import mock_roles_db
 from app.core.config import settings
 from typing import AsyncGenerator

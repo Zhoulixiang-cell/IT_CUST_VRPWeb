@@ -1,18 +1,34 @@
 from openai import AsyncOpenAI
 from app.core.config import settings
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Dict
 import base64
 import asyncio
 
 class TTSService:
     """文本转语音(TTS)服务：封装OpenAI TTS接口"""
     def __init__(self):
-        self.client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+        self.client = None
+        if settings.OPENAI_API_KEY and settings.OPENAI_API_KEY != "sk-test-placeholder-key":
+            try:
+                self.client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+            except Exception as e:
+                print(f"TTS初始化失败: {e}")
+                self.client = None
 
     async def text_to_speech_stream(
         self, text: str, voice: str = "alloy"
     ) -> AsyncGenerator[Dict[str, str], None]:
         """流式生成音频，分块返回Base64编码的MP3"""
+        if not self.client:
+            # 模拟TTS输出
+            yield {
+                "type": "tts-chunk",
+                "audio": "data:audio/mp3;base64,placeholder",
+                "seq": 0,
+                "is_end": True
+            }
+            return
+            
         # 处理过长文本
         if len(text) > 4000:
             text = text[:3997] + "..."
