@@ -58,5 +58,26 @@ class ChatService:
         ):
             yield tts_data
 
+    async def get_single_reply(self, session_id: str, user_input: str) -> str:
+        """获取单次AI回复（用于文本聊天API）"""
+        if session_id not in self.sessions:
+            raise ValueError(f"会话 {session_id} 未初始化")
+
+        history = self.get_session_history(session_id)
+        history.append({"role": "user", "content": user_input})
+
+        # 获取LLM回复
+        llm_response = []
+        async for llm_data in llm_client.stream_chat_completion(history):
+            if llm_data["type"] == "llm-token":
+                llm_response.append(llm_data["token"])
+            elif llm_data["type"] == "llm-error":
+                return f"抱歉，{llm_data['message']}"
+
+        final_llm_text = "".join(llm_response)
+        history.append({"role": "assistant", "content": final_llm_text})
+        
+        return final_llm_text
+
 # 创建全局聊天服务实例
 chat_service = ChatService()

@@ -1,7 +1,10 @@
 import { useState, useRef, useEffect } from "react";
+import VoiceRecorder from "./VoiceRecorder";
+import AudioPlayer from "./AudioPlayer";
 
-function ChatBox({ messages, onSend, selectedRole }) {
+function ChatBox({ messages, onSend, onVoiceMessage, selectedRole }) {
   const [input, setInput] = useState("");
+  const [isRecording, setIsRecording] = useState(false);
   const messagesEndRef = useRef(null);
 
   // 自动滚动到底部
@@ -54,6 +57,15 @@ function ChatBox({ messages, onSend, selectedRole }) {
                     {new Date(message.timestamp).toLocaleTimeString()}
                   </div>
                 )}
+                
+                {/* AI消息附加语音播放按钮 */}
+                {message.sender === "ai" && (
+                  <AudioPlayer 
+                    text={message.text}
+                    roleId={selectedRole?.id}
+                    autoPlay={false}
+                  />
+                )}
               </div>
             </div>
           ))
@@ -70,11 +82,19 @@ function ChatBox({ messages, onSend, selectedRole }) {
           onChange={(e) => setInput(e.target.value)}
           onKeyPress={handleKeyPress}
           placeholder={selectedRole ? `与${selectedRole.name}对话...` : "请先选择角色"}
-          disabled={!selectedRole}
+          disabled={!selectedRole || isRecording}
         />
+        
+        {/* 语音录制组件 */}
+        <VoiceRecorder
+          onVoiceMessage={onVoiceMessage}
+          isRecording={isRecording}
+          setIsRecording={setIsRecording}
+        />
+        
         <button
           onClick={handleSend}
-          disabled={!selectedRole || !input.trim()}
+          disabled={!selectedRole || !input.trim() || isRecording}
           className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
         >
           发送

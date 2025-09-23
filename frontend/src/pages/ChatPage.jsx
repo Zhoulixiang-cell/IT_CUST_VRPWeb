@@ -39,10 +39,11 @@ function ChatPage() {
     setMessages(prev => [...prev, userMessage]);
 
     try {
-      // 调用后端 API 获取 AI 回复（暂时用模拟数据）
+      // 调用后端 API 获取 AI 回复
+      const response = await sendChatMessage(selectedRole.id, text);
       const aiMessage = { 
         sender: "ai", 
-        text: `[${selectedRole.name}] 你好！你刚才说的是：${text}。很高兴与你交流！`, 
+        text: response.reply, 
         timestamp: Date.now() 
       };
       setMessages(prev => [...prev, aiMessage]);
@@ -51,6 +52,45 @@ function ChatPage() {
       const errorMessage = { 
         sender: "ai", 
         text: "抱歉，消息发送失败，请稍后重试。", 
+        timestamp: Date.now() 
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    }
+  };
+
+  // 处理语音消息
+  const handleVoiceMessage = async (audioBlob) => {
+    if (!selectedRole) {
+      alert("请先选择一个角色");
+      return;
+    }
+
+    try {
+      // 添加用户语音消息显示
+      const userMessage = { 
+        sender: "user", 
+        text: "🎤 语音消息", 
+        isVoice: true,
+        audioBlob: audioBlob,
+        timestamp: Date.now() 
+      };
+      setMessages(prev => [...prev, userMessage]);
+
+      // TODO: 将来连接WebSocket发送语音数据
+      // 暂时使用模拟回复
+      setTimeout(() => {
+        const aiMessage = { 
+          sender: "ai", 
+          text: `[${selectedRole.name}] 我收到了您的语音消息，但目前还在开发中。请使用文本输入。`, 
+          timestamp: Date.now() 
+        };
+        setMessages(prev => [...prev, aiMessage]);
+      }, 1000);
+    } catch (error) {
+      console.error("处理语音消息失败:", error);
+      const errorMessage = { 
+        sender: "ai", 
+        text: "抱歉，语音消息处理失败。", 
         timestamp: Date.now() 
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -105,6 +145,7 @@ function ChatPage() {
         <ChatBox 
           messages={messages} 
           onSend={handleSend}
+          onVoiceMessage={handleVoiceMessage}
           selectedRole={selectedRole}
         />
       </div>

@@ -1,5 +1,6 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, UploadFile, File, Query
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, UploadFile, File, Query, HTTPException
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 from app.services.chat_servers import chat_service
 from app.services.asr import asr_service
 from app.services.tts import tts_service
@@ -9,6 +10,40 @@ from typing import AsyncGenerator
 
 # 创建聊天API路由
 router = APIRouter(prefix=f"{settings.API_PREFIX}/chat", tags=["聊天交互"])
+
+# 文本聊天请求模型
+class TextChatRequest(BaseModel):
+    role_id: str
+    message: str
+
+# 文本聊天响应模型
+class TextChatResponse(BaseModel):
+    role_id: str
+    reply: str
+    session_id: str
+
+@router.post("/text", response_model=TextChatResponse, summary="文本聊天接口")
+async def text_chat(req: TextChatRequest):
+    """单次文本聊天接口，返回AI回复"""
+    # 校验角色是否存在
+    role = next((r for r in mock_roles_db if r.id == req.role_id), None)
+    if not role:
+        raise HTTPException(status_code=404, detail=f"角色 {req.role_id} 不存在")
+    
+    # 生成临时会话ID
+    session_id = f"text_session_{req.role_id}_{hash(req.message) % 1000000}"
+    
+    # 初始化会话
+    chat_service.init_session(session_id=session_id, role=role)
+    
+    # 获取AI回复
+    ai_reply = await chat_service.get_single_reply(session_id, req.message)
+    
+    return TextChatResponse(
+        role_id=req.role_id,
+        reply=ai_reply,
+        session_id=session_id
+    )
 
 @router.websocket(f"{settings.WS_PREFIX}/session/{settings.API_PREFIX.strip('/')}/{{session_id}}/{{role_id}}")
 async def chat_websocket(

@@ -5,11 +5,25 @@ import json
 
 class Settings(BaseSettings):
     """全局配置类：从.env加载配置，无则使用默认值"""
-    # OpenAI配置
+    # OpenAI配置（保留兼容性）
     OPENAI_API_KEY: Optional[str] = None
     LLM_MODEL_NAME: str = "gpt-4o"
     TTS_MODEL_NAME: str = "tts-1"
     ASR_MODEL_NAME: str = "whisper-1"
+    
+    # 智谱AI配置
+    ZHIPU_API_KEY: str = "your-zhipu-api-key-here"
+    
+    # 通义千问配置
+    QWEN_API_KEY: str = ""
+    
+    # 百度语音配置
+    BAIDU_APP_ID: str = ""
+    BAIDU_API_KEY: str = ""
+    BAIDU_SECRET_KEY: str = ""
+    
+    # LLM服务选择："openai" 或 "zhipu" 或 "qwen"
+    LLM_PROVIDER: str = "zhipu"
 
     # 数据库配置
     DATABASE_URL: Optional[str] = None
