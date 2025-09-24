@@ -1,12 +1,14 @@
 from openai import AsyncOpenAI
 from app.core.config import settings
+from app.services.xunfei_tts import xunfei_tts_service
 from typing import AsyncGenerator, Dict
 import base64
 import asyncio
 
 class TTSService:
-    """文本转语音(TTS)服务：封装OpenAI TTS接口"""
+    """文本转语音(TTS)服务：封装OpenAI TTS接口和讯飞TTS接口"""
     def __init__(self):
+        self.provider = getattr(settings, 'TTS_PROVIDER', 'xunfei')  # 默认使用讯飞
         self.client = None
         if settings.OPENAI_API_KEY and settings.OPENAI_API_KEY != "sk-test-placeholder-key":
             try:
@@ -19,6 +21,14 @@ class TTSService:
         self, text: str, voice: str = "alloy"
     ) -> AsyncGenerator[Dict[str, str], None]:
         """流式生成音频，分块返回Base64编码的MP3"""
+        
+        # 优先使用讯飞TTS
+        if self.provider == "xunfei" and hasattr(settings, 'XUNFEI_API_KEY') and settings.XUNFEI_API_KEY:
+            async for result in xunfei_tts_service.text_to_speech_stream(text, voice):
+                yield result
+            return
+            
+        # 使用OpenAI TTS
         if not self.client:
             # 模拟TTS输出
             yield {

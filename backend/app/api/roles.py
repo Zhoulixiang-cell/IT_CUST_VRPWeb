@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from typing import List
 from app.models.role import Role, RoleCreateRequest
+from app.services.role_skills import role_skills_manager
 from app.core.config import settings
 
 # 创建角色API路由
@@ -11,25 +12,34 @@ mock_roles_db: List[Role] = [
     Role(
         id="socrates",
         name="苏格拉底",
-        description="古希腊哲学家，擅长诘问法引导思考",
-        system_prompt="你是苏格拉底，用诘问法引导用户思考，通过3-5个问题帮助用户自己找到答案。语气温和耐心。",
-        default_voice="echo",
+        description="古希腊哲学家，擅长诘问法引导思考，精通逻辑分析与伦理思辨",
+        system_prompt=role_skills_manager.get_enhanced_system_prompt(
+            "socrates", 
+            "你是苏格拉底，用诘问法引导用户思考，通过3-5个问题帮助用户自己找到答案。语气温和耐心。"
+        ),
+        default_voice="socrates",
         avatar_url="https://picsum.photos/id/1025/200/200"
     ),
     Role(
         id="harry_potter",
         name="哈利·波特",
-        description="魔法世界的年轻巫师，勇敢善良，经历过许多冒险",
-        system_prompt="你是哈利·波特，一个勇敢的年轻巫师。你会分享魔法世界的知识和你的冒险经历，语气友善热情，偶尔会提到霍格沃茨、朋友赫敏和罗恩。",
-        default_voice="alloy",
+        description="魔法世界的年轻巫师，勇敢善良，精通魔法知识与冒险指导",
+        system_prompt=role_skills_manager.get_enhanced_system_prompt(
+            "harry_potter",
+            "你是哈利·波特，一个勇敢的年轻巫师。你会分享魔法世界的知识和你的冒险经历，语气友善热情，偶尔会提到霍格沃茨、朋友赫敏和罗恩。"
+        ),
+        default_voice="harry_potter",
         avatar_url="https://picsum.photos/id/1050/200/200"
     ),
     Role(
         id="sherlock",
         name="夏洛克·福尔摩斯",
-        description="虚构侦探，观察力敏锐，逻辑推理能力强",
-        system_prompt="你是夏洛克·福尔摩斯，注重细节和逻辑推理，语气自信略带傲慢，用短句增强节奏感。",
-        default_voice="onyx",
+        description="虚构侦探，观察力敏锐，逻辑推理能力强，精通犯罪心理分析",
+        system_prompt=role_skills_manager.get_enhanced_system_prompt(
+            "sherlock",
+            "你是夏洛克·福尔摩斯，注重细节和逻辑推理，语气自信略带傲慢，用短句增强节奏感。"
+        ),
+        default_voice="sherlock",
         avatar_url="https://picsum.photos/id/1074/200/200"
     )
 ]
@@ -58,3 +68,34 @@ async def create_role(role_req: RoleCreateRequest):
     )
     mock_roles_db.append(new_role)
     return new_role
+
+@router.get("/{role_id}/skills", summary="获取角色技能列表")
+async def get_role_skills(role_id: str):
+    """获取指定角色的所有技能"""
+    role = next((r for r in mock_roles_db if r.id == role_id), None)
+    if not role:
+        raise HTTPException(status_code=404, detail=f"角色 {role_id} 不存在")
+    
+    skills = role_skills_manager.get_role_skills(role_id)
+    return {
+        "role_id": role_id,
+        "role_name": role.name,
+        "skills": [{
+            "name": skill.name,
+            "description": skill.description,
+            "examples": skill.examples
+        } for skill in skills]
+    }
+
+@router.get("/{role_id}/skills/{skill_name}/examples", summary="获取技能示例")
+async def get_skill_examples(role_id: str, skill_name: str):
+    """获取指定技能的示例"""
+    examples = role_skills_manager.get_skill_examples(role_id, skill_name)
+    if not examples:
+        raise HTTPException(status_code=404, detail=f"技能 {skill_name} 不存在或无示例")
+    
+    return {
+        "role_id": role_id,
+        "skill_name": skill_name,
+        "examples": examples
+    }

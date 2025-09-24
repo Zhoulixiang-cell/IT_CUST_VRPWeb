@@ -1,13 +1,14 @@
 from openai import AsyncOpenAI
 from app.core.config import settings
 from app.services.baidu_asr import baidu_asr_service
+from app.services.xunfei_asr import xunfei_asr_service
 from typing import AsyncGenerator, Dict
 import asyncio
 
 class ASRService:
-    """多语音识别服务：支持OpenAI Whisper和百度语音识别"""
+    """多语音识别服务：支持OpenAI Whisper、百度语音识别和讯飞语音识别"""
     def __init__(self):
-        self.provider = getattr(settings, 'ASR_PROVIDER', 'baidu')  # 默认使用百度
+        self.provider = getattr(settings, 'ASR_PROVIDER', 'xunfei')  # 默认使用讯飞
         self.openai_client = None
         
         # 初始化OpenAI客户端（如果配置了）
@@ -23,8 +24,20 @@ class ASRService:
     ) -> AsyncGenerator[Dict[str, str], None]:
         """流式处理音频，返回识别结果"""
         
-        # 优先使用百度语音识别
-        if self.provider == "baidu" and hasattr(settings, 'BAIDU_API_KEY') and settings.BAIDU_API_KEY:
+        # 优先使用讯飞语音识别
+        if self.provider == "xunfei" and hasattr(settings, 'XUNFEI_API_KEY') and settings.XUNFEI_API_KEY:
+            # 收集音频数据
+            audio_buffer = b""
+            async for chunk in audio_chunks:
+                audio_buffer += chunk
+            
+            # 使用讯飞ASR
+            async for result in xunfei_asr_service.transcribe_stream(audio_buffer):
+                yield result
+            return
+        
+        # 使用百度语音识别
+        elif self.provider == "baidu" and hasattr(settings, 'BAIDU_API_KEY') and settings.BAIDU_API_KEY:
             # 收集音频数据
             audio_buffer = b""
             async for chunk in audio_chunks:

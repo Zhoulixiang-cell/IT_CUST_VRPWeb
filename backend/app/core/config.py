@@ -17,10 +17,19 @@ class Settings(BaseSettings):
     # 通义千问配置
     QWEN_API_KEY: str = ""
     
+    # 讯飞语音配置
+    XUNFEI_API_KEY: str = ""
+    XUNFEI_APP_ID: str = ""
+    XUNFEI_API_SECRET: str = ""
+    
     # 百度语音配置
     BAIDU_APP_ID: str = ""
     BAIDU_API_KEY: str = ""
     BAIDU_SECRET_KEY: str = ""
+    
+    # 语音服务选择："openai", "baidu", "xunfei"
+    ASR_PROVIDER: str = "xunfei"
+    TTS_PROVIDER: str = "xunfei"
     
     # LLM服务选择："openai" 或 "zhipu" 或 "qwen"
     LLM_PROVIDER: str = "zhipu"
